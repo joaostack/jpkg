@@ -60,4 +60,11 @@ case "$1" in
 		CHECK_PKG "$@" || exit 1
 		CREATE_PKG "$@"
 	;;
+	help|-h)
+		cat <<EOF
+Parameters:
+	create|-c  :  Create a package
+EOF
+		exit 0
+	;;
 esac

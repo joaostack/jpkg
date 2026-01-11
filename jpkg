@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+export LC_ALL=C
+export LANG=C
+
 # ANSI Colors
 RESET="\033[0m"
 
@@ -26,8 +29,8 @@ BOLD_WHITE="\033[1;37m"
 function CHECK_PKG() {
 	target_pkg="$@"
 
-	if ! grep "\bpkg\b$" <<< "$target_pkg"; then
-		printf '%b' "\e${BOLD_RED}The package must be .pkg!\e${RESET}\n"
+	if ! grep "\bjpkg\b$" <<< "$target_pkg"; then
+		printf '%b' "\e${BOLD_RED}The package must be .jpkg!\e${RESET}\n"
 		return 1
 	fi
 
@@ -40,31 +43,61 @@ function CHECK_PKG() {
 function CREATE_PKG() {
 	target_pkg="$1"
 
-	if tar -czf "../${target_pkg}" .; then
-		printf '%b' "\e${BOLD_GREEN}Package created in ../${target_pkg}\e${RESET}\n"
-		return 0
+	if [[ "$VERBOSE" = "1" ]]; then
+		if tar -cvzf "../${target_pkg}" .; then
+			printf '%b' "\e${BOLD_GREEN}Package created in ../${target_pkg}\e${RESET}\n"
+			return 0
+		else
+			printf '%b' "\e${BOLD_RED}Error on package create!\e${RESET}\n"
+			exit 1
+		fi
 	else
-		printf '%b' "\e${BOLD_RED}Error on package create!\e${RESET}\n"
-		exit 1
+		if tar -czf "../${target_pkg}" .; then
+			printf '%b' "\e${BOLD_GREEN}Package created in ../${target_pkg}\e${RESET}\n"
+			return 0
+		else
+			printf '%b' "\e${BOLD_RED}Error on package create!\e${RESET}\n"
+			exit 1
+		fi
 	fi
 }
 
-case "$1" in
+function USAGE() {
+	cat <<EOF
+Parameters:
+	create|-c	:	Create a package
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		create|-c)
+			CMD=$1
+			shift
+		;;
+		verbose|-v)
+			VERBOSE=1
+			shift
+		;;
+		*.jpkg)
+			PKG=$1
+			shift
+		;;
+		*|-h) USAGE
+			exit 0
+		;;
+	esac
+done
+
+case "$CMD" in
 	create|-c)
 		shift
-		if [[ -z "$1" ]]; then
+		if [[ -z "$CMD" ]]; then
 			printf '%b' "\e${BOLD_WHITE}Missing target package name!\e${RESET}\n"
 			exit 1
 		fi
 
-		CHECK_PKG "$@" || exit 1
-		CREATE_PKG "$@"
-	;;
-	help|-h)
-		cat <<EOF
-Parameters:
-	create|-c  :  Create a package
-EOF
-		exit 0
+		CHECK_PKG "$PKG" || exit 1
+		CREATE_PKG "$PKG"
 	;;
 esac
